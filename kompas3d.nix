@@ -4,6 +4,8 @@
   wineWowPackages,
   winetricks,
   p7zip,
+  unzip,
+  file,
   makeDesktopItem,
   symlinkJoin,
   kActivation,
@@ -16,6 +18,8 @@
       winetricks
       wineWowPackages.stable
       p7zip
+      unzip
+      file
       (kActivation.override {wine = wineWowPackages.stable;})
     ];
     text = ''
@@ -31,6 +35,7 @@
       LEFT_UNPACK=0
       KOMPAS_ISO=
       ACTIVATE=
+      KOMPAS_UPDATER=
 
       usage() {
         echo "Usage: $(basename "$0") [-i KOMPAS_3D_ISO] [-w WINEPREFIX] [-acnh]"
@@ -38,6 +43,7 @@
         echo "  Calling with -i will run an installation first"
         echo
         echo "  -i  KOMPAS_3D_ISO   run installation with specified iso image"
+        echo "  -u  KOMPAS_UPDATE   update kompas with zip file"
         echo "  -w  WINEPREFIX      change default wineprefix [$WINEPREFIX]"
         echo "  -a                  run licance activator instead of CAD"
         echo "  -c                  clear prefix before installation"
@@ -46,10 +52,11 @@
         exit
       }
 
-      while getopts 'w:i:acnh' opt; do
+      while getopts 'w:i:u:acnh' opt; do
         case $opt in
         w) WINEPREFIX="$OPTARG" ;;
         i) KOMPAS_ISO="$OPTARG" ;;
+        u) KOMPAS_UPDATER="$OPTARG" ;;
         a) ACTIVATE=1 ;;
         c) CLEAR=1 ;;
         n) LEFT_UNPACK=1 ;;
@@ -63,6 +70,9 @@
       elif [ ! -f "$KHOME" ]; then
         echo "Please run $0 with '-i KOMPAS_3D_ISO' first for wineprefix '$WINEPREFIX'"
         exit 1;
+      fi
+      if [ -n "$KOMPAS_UPDATER" ]; then
+        update_kompas "$WINEPREFIX" "$KOMPAS_UPDATER" $LEFT_UNPACK
       fi
 
       export WINEPREFIX

@@ -11,6 +11,43 @@ unpack_iso() {
   fi
 }
 
+unpack_zip() {
+  KOMPAS_ZIP="$1"
+  MD5SUM="$(md5sum "$KOMPAS_ZIP" | awk '{ print $1 }')"
+  KOMPAS_ZIP_DIR="$WINEPREFIX/.source/$MD5SUM"
+  if [ ! -f "$KOMPAS_ZIP_DIR/Update.exe" ]; then
+    rm -rf "$KOMPAS_ZIP_DIR"
+    mkdir -p "$KOMPAS_ZIP_DIR"
+    unzip "$KOMPAS_ZIP" -d "$KOMPAS_ZIP_DIR"
+  fi
+}
+
+
+
+update_kompas() {
+  WINEPREFIX="$1"
+  KOMPAS_UPDATER="$2"
+  LEFT_UNPACK="$3"
+
+  EXE_FILE=
+
+  if file -b "$KOMPAS_UPDATER" | grep -qi exe; then
+    EXE_FILE="$KOMPAS_UPDATER"
+  elif file -b "$KOMPAS_UPDATER" | grep -qi zip; then
+    unpack_zip "$KOMPAS_UPDATER"
+    EXE_FILE="$KOMPAS_ZIP_DIR/Update.exe"
+  else
+    echo "Invalid kompas updater source path '$KOMPAS_UPDATER'"
+    return 1
+  fi
+
+  export WINEPREFIX
+  export WINEARCH=win64
+  export WINEDLLOVERRIDES=winemenubuilder.exe=d
+
+  wine64 "$EXE_FILE"
+}
+
 install_kompas() {
   set -e
 
